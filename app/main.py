@@ -7,6 +7,7 @@ from app.router_project import router as project_router
 from app.auth import get_password_hash
 from sqlalchemy.future import select
 import uuid
+from datetime import date
 
 app = FastAPI(
     title="Science Manager API",
@@ -53,8 +54,8 @@ async def on_startup():
                 title="Ứng dụng Blockchain trong quản lý văn bằng hệ thống PTIT",
                 research_field="Blockchain Security",
                 budget=50000000,
-                start_date="2024-01-01",
-                end_date="2024-12-31",
+                start_date=date(2024, 1, 1),
+                end_date=date(2024, 12, 31),
                 status=ProjectStatus.APPROVED,
                 leader_id=admin_id
             )
@@ -63,7 +64,7 @@ async def on_startup():
             project2 = Project(
                 title="Nghiên cứu và đánh giá rủi ro hệ thống kiểm thử tự động Penetration Test",
                 research_field="Pentest",
-                start_date="2024-06-01",
+                start_date=date(2024, 6, 1),
                 status=ProjectStatus.DRAFT,
                 leader_id=admin_id
             )
