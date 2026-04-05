@@ -44,3 +44,50 @@ async def read_project(
     if db_project is None:
         raise HTTPException(status_code=404, detail="Không tìm thấy thông tin đề tài này.")
     return db_project
+
+@router.put("/{project_id}", response_model=schemas.ProjectResponse)
+async def update_project(
+    project_id: UUID, project: schemas.ProjectUpdate,
+    db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role not in [models.UserRole.TEACHER, models.UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    db_project = await crud_project.update_project(db, project_id, project)
+    if not db_project: raise HTTPException(status_code=404, detail="Not found")
+    return db_project
+
+@router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project(
+    project_id: UUID, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role != models.UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only ADMIN can delete projects")
+    success = await crud_project.delete_project(db, project_id)
+    if not success: raise HTTPException(status_code=404, detail="Not found")
+    return None
+
+@router.post("/{project_id}/members", response_model=schemas.ProjectMemberResponse)
+async def add_member(
+    project_id: UUID, member: schemas.ProjectMemberCreate,
+    db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_user)
+):
+    return await crud_project.add_project_member(db, project_id, member)
+
+@router.get("/{project_id}/members", response_model=List[schemas.ProjectMemberResponse])
+async def read_members(
+    project_id: UUID, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_user)
+):
+    return await crud_project.get_project_members(db, project_id)
+
+@router.post("/{project_id}/publications", response_model=schemas.PublicationResponse)
+async def add_publication(
+    project_id: UUID, pub: schemas.PublicationCreate,
+    db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_user)
+):
+    return await crud_project.add_publication(db, project_id, pub)
+
+@router.get("/{project_id}/publications", response_model=List[schemas.PublicationResponse])
+async def read_publications(
+    project_id: UUID, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_user)
+):
+    return await crud_project.get_project_publications(db, project_id)

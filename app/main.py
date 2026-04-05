@@ -39,39 +39,18 @@ async def on_startup():
         result = await db.execute(select(User).limit(1))
         if not result.scalars().first():
             print("--- BẮT ĐẦU CHẠY SEED DATA CHO MVP ---")
-            admin_id = uuid.uuid4()
-            admin = User(
-                id=admin_id,
-                username="admin",
-                hashed_password=get_password_hash("admin123"), # Mật khẩu sẽ đăng nhập ở Frontend
-                role=UserRole.ADMIN,
-                email="admin@ptit.edu.vn",
-                department="Ban Quản trị Khoa"
-            )
-            db.add(admin)
+            admin_id, teacher_id, student_id = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+            pwd = get_password_hash("admin123")
             
-            project1 = Project(
-                title="Ứng dụng Blockchain trong quản lý văn bằng hệ thống PTIT",
-                research_field="Blockchain Security",
-                budget=50000000,
-                start_date=date(2024, 1, 1),
-                end_date=date(2024, 12, 31),
-                status=ProjectStatus.APPROVED,
-                leader_id=admin_id
-            )
-            db.add(project1)
+            db.add(User(id=admin_id, username="admin", hashed_password=pwd, role=UserRole.ADMIN, email="admin@ptit.edu.vn", department="Ban Quản trị Khoa"))
+            db.add(User(id=teacher_id, username="teacher1", hashed_password=pwd, role=UserRole.TEACHER, email="teacher1@ptit.edu.vn", department="ATTT"))
+            db.add(User(id=student_id, username="student1", hashed_password=pwd, role=UserRole.STUDENT, email="student1@ptit.edu.vn", department="D20CQAT"))
             
-            project2 = Project(
-                title="Nghiên cứu và đánh giá rủi ro hệ thống kiểm thử tự động Penetration Test",
-                research_field="Pentest",
-                start_date=date(2024, 6, 1),
-                status=ProjectStatus.DRAFT,
-                leader_id=admin_id
-            )
-            db.add(project2)
-            
+            p1 = Project(title="Ứng dụng Blockchain trong quản lý văn bằng", research_field="Blockchain Security", budget=50000000, start_date=date(2024, 1, 1), end_date=date(2024, 12, 31), status=ProjectStatus.APPROVED, leader_id=teacher_id)
+            p2 = Project(title="Hệ thống kiểm thử tự động Pentest", research_field="Pentest", start_date=date(2024, 6, 1), status=ProjectStatus.DRAFT, leader_id=teacher_id)
+            db.add_all([p1, p2])
             await db.commit()
-            print("--- SEED DATA HOÀN TẤT: Đã có sẵn tài khoản: admin | Mật khẩu: admin123")
+            print("--- SEED DATA HOÀN TẤT: admin, teacher1, student1 (mk: admin123) ---")
 
 @app.get("/")
 async def root():

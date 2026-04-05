@@ -6,7 +6,8 @@ from sqlalchemy.future import select
 
 from app.database import get_db
 from app.models import User
-from app.auth import verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from app import schemas
+from app.auth import verify_password, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter(
     prefix="/api/auth",
@@ -36,3 +37,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     
     # 4. Trả về format chuẩn của OAuth2 auth token
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.get("/me", response_model=schemas.UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
