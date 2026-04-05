@@ -1,0 +1,24 @@
+# Git
+.git
+.gitignore
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Frontend
+frontend/
+node_modules/
+
+# Database
+init.sql
+postgres_data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/
+.env
