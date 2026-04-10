@@ -203,24 +203,20 @@ async function applyProject(projectId) {
 
 function closeApplyModal() {
     document.getElementById('applyModal').style.display = 'none';
-    document.getElementById('applyGPA').value = '';
     document.getElementById('applyNotes').value = '';
 }
 
 async function submitApplication() {
     const projectId = document.getElementById('applyProjectId').value;
-    const gpa = document.getElementById('applyGPA').value;
     const notes = document.getElementById('applyNotes').value;
     
-    if (!gpa || !notes) return alert("Vui lòng điền đầy đủ GPA và Định hướng!");
-
-    const formattedNotes = `GPA: ${gpa} | Định hướng: ${notes}`;
+    if (!notes) return alert("Vui lòng nhập lời giới thiệu bản thân!");
 
     const out = await fetchAPI('/requests', { 
         method: 'POST', 
         body: JSON.stringify({
             project_id: projectId,
-            notes: formattedNotes
+            notes: notes
         }) 
     });
 
