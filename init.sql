@@ -32,8 +32,10 @@ CREATE TABLE project_members (
     project_id UUID NOT NULL,
     role_in_project project_member_role NOT NULL DEFAULT 'MEMBER',
     status VARCHAR(50) DEFAULT 'PENDING', -- PENDING, APPROVED, REJECTED
+    student_notes TEXT,
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, project_id),
+
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
 );

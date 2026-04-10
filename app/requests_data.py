@@ -12,11 +12,12 @@ def apply_project():
         return jsonify({"error": "Chỉ sinh viên mới gửi yêu cầu"}), 403
         
     project_id = request.json.get("project_id")
+    student_notes = request.json.get("notes", "")
     
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("INSERT INTO project_members (user_id, project_id, status) VALUES (%s, %s, 'PENDING')", (user_id, project_id))
+        cursor.execute("INSERT INTO project_members (user_id, project_id, status, student_notes) VALUES (%s, %s, 'PENDING', %s)", (user_id, project_id, student_notes))
         conn.commit()
         success = True
     except Exception as e:

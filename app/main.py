@@ -24,7 +24,11 @@ def init_db_schema():
             IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='projects' AND column_name='document_url') THEN
                 ALTER TABLE projects ADD COLUMN document_url TEXT;
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='project_members' AND column_name='student_notes') THEN
+                ALTER TABLE project_members ADD COLUMN student_notes TEXT;
+            END IF;
         END $$;
+
     """)
     conn.commit()
     conn.close()

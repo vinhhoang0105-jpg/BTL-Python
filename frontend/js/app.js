@@ -195,11 +195,38 @@ async function createProject() {
     loadProjects();
 }
 
-// Sinh viên xin tham gia
+// Sinh viên xin tham gia - Mở Modal hồ sơ
 async function applyProject(projectId) {
-    const out = await fetchAPI('/requests', { method: 'POST', body: JSON.stringify({project_id: projectId}) });
+    document.getElementById('applyProjectId').value = projectId;
+    document.getElementById('applyModal').style.display = 'flex';
+}
+
+function closeApplyModal() {
+    document.getElementById('applyModal').style.display = 'none';
+    document.getElementById('applyGPA').value = '';
+    document.getElementById('applyNotes').value = '';
+}
+
+async function submitApplication() {
+    const projectId = document.getElementById('applyProjectId').value;
+    const gpa = document.getElementById('applyGPA').value;
+    const notes = document.getElementById('applyNotes').value;
+    
+    if (!gpa || !notes) return alert("Vui lòng điền đầy đủ GPA và Định hướng!");
+
+    const formattedNotes = `GPA: ${gpa} | Định hướng: ${notes}`;
+
+    const out = await fetchAPI('/requests', { 
+        method: 'POST', 
+        body: JSON.stringify({
+            project_id: projectId,
+            notes: formattedNotes
+        }) 
+    });
+
     if(out.success) {
-        alert("Đã gửi yêu cầu tham gia!");
+        alert("Đã gửi hồ sơ đăng ký tham gia!");
+        closeApplyModal();
         await loadStudentRequests();
         await loadProjects();
     } else {
@@ -238,20 +265,29 @@ async function viewRequests(projectId) {
     panel.style.display = 'block';
     
     content.innerHTML = reqs.length ? '<div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">' + reqs.map(r => `
-        <div style="background:white; padding:15px; border-radius:10px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <div style="font-weight:600; color:var(--text-main);">${r.username}</div>
-                <div style="font-size:12px; color:var(--text-muted);">${r.email}</div>
-                <div style="margin-top:4px;"><span class="badge" style="font-size:9px; background:#f1f5f9;">${r.status}</span></div>
+        <div style="background:white; padding:15px; border-radius:10px; border:1px solid var(--border); display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-weight:700; color:var(--text-main); font-size:15px;">${r.username}</div>
+                    <div style="font-size:12px; color:var(--text-muted);">${r.email}</div>
+                </div>
+                <div><span class="badge" style="font-size:9px; background:#f1f5f9; color:var(--text-muted);">${r.status}</span></div>
             </div>
+            
+            <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px dashed #cbd5e1;">
+                <div style="font-size:11px; font-weight:700; color:var(--primary); text-transform:uppercase; margin-bottom:4px;">Thông tin hồ sơ:</div>
+                <div style="font-size:13px; color:var(--text-main); line-height:1.4;">${r.student_notes || 'Không có thông tin bổ sung.'}</div>
+            </div>
+
             ${r.status === 'PENDING' ? `
-                <div style="display:flex; gap:8px;">
+                <div style="display:flex; gap:8px; justify-content:flex-end; border-top:1px solid #f1f5f9; pt:10px; padding-top:10px;">
                     <button class="btn btn-success btn-sm" onclick="changeRequestStatus('${r.project_id}','${r.user_id}','APPROVED')"><i class="ph ph-user-plus"></i> Chấp nhận</button>
                     <button class="btn btn-danger btn-sm" onclick="changeRequestStatus('${r.project_id}','${r.user_id}','REJECTED')"><i class="ph ph-user-minus"></i> Từ chối</button>
                 </div>
             ` : ''}
         </div>
     `).join('') + '</div>' : "<div style='text-align:center; padding:20px; color:var(--text-muted);'>Chưa có sinh viên nào đăng ký tham gia đề tài này.</div>";
+
     
     panel.scrollIntoView({ behavior: 'smooth' });
 }
