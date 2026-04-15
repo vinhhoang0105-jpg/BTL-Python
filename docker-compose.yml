@@ -1,55 +1,57 @@
-version: '3.8'
+version: "3.9"
 
 services:
   db:
-    image: postgres:15
-    container_name: science_db
+    image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: your_password
-      POSTGRES_DB: science_manager
+      POSTGRES_USER: ${POSTGRES_USER:-scires}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scires_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-scires_db}
+    ports:
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    expose:
-      - 5432
-    networks:
-      - science_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d science_manager"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scires}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   backend:
     build:
-      context: ./app
+      context: ./backend
       dockerfile: Dockerfile
-    container_name: science_backend
-    environment:
-      DATABASE_URL: postgresql://postgres:your_password@db:5432/science_manager
+    restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://scires:scires_secret@db:5432/scires_db}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production-abc123xyz}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+      AUTO_SEED: "true"
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - science_net
+    volumes:
+      - ./backend:/app
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: science_frontend
+    restart: unless-stopped
     ports:
-      - "80:80"
+      - "3000:3000"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api}
     depends_on:
       - backend
-    networks:
-      - science_net
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
 volumes:
-  postgres_data:
-networks:
-  science_net:
-    driver: bridge
+  pgdata:

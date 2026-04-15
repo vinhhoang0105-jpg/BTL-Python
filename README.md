@@ -1,53 +1,151 @@
-# Khoa An toàn Thông tin - Hệ thống Quản lý NCKH
+# SciRes — Hệ thống Quản lý Nghiên cứu Khoa học
 
-Dự án là một nền tảng dành cho việc quản lý các đề tài Nghiên cứu Khoa học (NCKH) trong môi trường giáo dục. Hệ thống được thiết kế với giao diện chuyên nghiệp, hỗ trợ phân quyền chặt chẽ giữa Quản trị viên, Giảng viên và Sinh viên.
+> University Scientific Research Management System — MVP
 
----
+## Tech Stack
 
-## Tổng quan
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, Vite, React Router, TanStack Query, React Hook Form, Zod |
+| Backend | FastAPI, SQLAlchemy, Alembic, Pydantic, python-jose (JWT) |
+| Database | PostgreSQL 16 |
+| Container | Docker, Docker Compose |
 
-- **Giao diện Modern UI/UX**: Sử dụng hệ thống thiết kế hiện đại với font chữ **Inter**, bộ icon chuyên nghiệp từ **Phosphor Icons**, mang lại cảm giác của một ứng dụng thực thụ.
-- **Tính năng Đăng ký Hồ sơ**: Sinh viên có thể gửi kèm lời giới thiệu năng lực (GPA, kinh nghiệm) khi đăng ký tham gia đề tài.
-- **Phân quyền dựa trên Role**: 
-    - **Admin**: Quản lý toàn bộ hệ thống, tài khoản và phê duyệt đề tài.
-    - **Giảng viên**: Chủ trì đề tài, quản lý thành viên và cập nhật tài liệu nghiên cứu.
-    - **Sinh viên**: Tìm kiếm đề tài và theo dõi trạng thái tham gia.
-- **Kiến trúc bền vững**: Tự động đồng bộ hóa cấu trúc CSDL (Auto-migration) khi khởi động.
-- **Sẵn sàng triển khai**: Đóng gói toàn bộ qua **Docker**, chỉ cần một lệnh duy nhất để chạy.
+## Quick Start
 
----
+### Prerequisites
+- Docker & Docker Compose installed
+- No other services running on ports `3000`, `5432`, `8000`
 
-## Công Nghệ Sử Dụng
+### 1. Clone & Configure
 
-| Thành phần | Công nghệ |
-| :--- | :--- |
-| **Backend** | Python (Flask), Psycopg2 |
-| **Database** | PostgreSQL |
-| **Frontend** | HTML5, Vanilla CSS3, Javascript |
-| **Deploy** | Docker, Docker Compose |
-
----
-
-## Hướng Dẫn Cài Đặt & Chạy
-
-Hệ thống yêu cầu máy tính đã cài đặt **Docker** và **Docker Compose**.
-
-### 1. Khởi chạy hệ thống
-Mở Terminal/PowerShell tại thư mục gốc của dự án và chạy:
 ```bash
-docker compose up --build -d
+git clone <repo-url>
+cd BTL-PY
+cp .env.example .env
 ```
 
-### 2. Truy cập ứng dụng
-Sau khi các container khởi động thành công, truy cập vào địa chỉ:
-[**http://localhost**](http://localhost)
+### 2. Start All Services
 
-### 3. Thông tin đăng nhập thử nghiệm
+```bash
+docker-compose up --build
+```
 
-| Vai trò | Tài khoản | Mật khẩu |
-| :--- | :--- | :--- |
-| **Quản trị viên** | `admin` | `admin123` |
-| **Giảng viên** | `teacher1` | `123456` |
-| **Sinh viên** | `student1` | `123456` |
+This will:
+- Start PostgreSQL 16 on port `5432`
+- Start FastAPI backend on port `8000` (auto-creates tables + seeds data)
+- Start React frontend on port `3000`
 
----
+### 3. Access
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8000/api/health |
+| API Docs (Swagger) | http://localhost:8000/docs |
+| API Docs (ReDoc) | http://localhost:8000/redoc |
+
+### 4. Demo Accounts
+
+All accounts use password: `password123`
+
+| Role | Email |
+|------|-------|
+| Quản trị viên | admin@university.edu.vn |
+| Phòng KHCN | staff@university.edu.vn |
+| Lãnh đạo | leader@university.edu.vn |
+| Giảng viên | faculty1@university.edu.vn |
+| Phản biện | reviewer1@university.edu.vn |
+
+## Development
+
+### Backend Only
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+### Frontend Only
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Database Migrations
+
+```bash
+# Inside backend container or with DATABASE_URL set:
+cd backend
+
+# Generate new migration
+alembic revision --autogenerate -m "description"
+
+# Apply migrations
+alembic upgrade head
+
+# Rollback one step
+alembic downgrade -1
+```
+
+### Seed Data
+
+```bash
+# Inside backend container:
+python -m app.seed.seed_data
+```
+
+## Project Structure
+
+```
+BTL-PY/
+├── docker-compose.yml          # Container orchestration
+├── .env / .env.example         # Environment configuration
+├── init.sql                    # PostgreSQL bootstrap
+├── docs/                       # Project documentation
+│   ├── permissions.md          # Role-permission matrix
+│   └── workflow.md             # State machines & workflows
+├── backend/                    # FastAPI application
+│   ├── app/
+│   │   ├── main.py             # App entry point
+│   │   ├── config.py           # Settings
+│   │   ├── database.py         # DB engine
+│   │   ├── core/               # Auth, security, exceptions
+│   │   ├── models/             # SQLAlchemy ORM models
+│   │   ├── schemas/            # Pydantic schemas
+│   │   ├── api/                # Route handlers
+│   │   └── seed/               # Demo data
+│   ├── alembic/                # Database migrations
+│   └── requirements.txt
+└── frontend/                   # React application
+    ├── src/
+    │   ├── App.jsx             # Router
+    │   ├── api/                # Axios API layer
+    │   ├── contexts/           # Auth context
+    │   ├── components/Layout/  # Sidebar, Header, MainLayout
+    │   ├── pages/              # Page components
+    │   └── utils/              # Constants, helpers
+    └── package.json
+```
+
+## API Overview
+
+| Module | Prefix | Status |
+|--------|--------|--------|
+| Auth | `/api/auth` | ✅ Done |
+| Users | `/api/users` | ✅ Done |
+| Catalog | `/api/catalog` | ✅ Done |
+| Periods | `/api/periods` | 🔜 Next |
+| Proposals | `/api/proposals` | 🔜 Next |
+| Councils | `/api/councils` | 🔜 Planned |
+| Approvals | `/api/approvals` | 🔜 Planned |
+| Progress | `/api/progress` | 🔜 Planned |
+| Acceptance | `/api/acceptance` | 🔜 Planned |
+| Dashboard | `/api/dashboard` | 🔜 Planned |
+
+## License
+
+Private — University project.
