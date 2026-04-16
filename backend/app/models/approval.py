@@ -40,7 +40,7 @@ class ApprovalHistory(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     proposal_id = Column(UUID(as_uuid=True), ForeignKey("proposals.id", ondelete="CASCADE"), nullable=False, index=True)
-    step_id = Column(UUID(as_uuid=True), ForeignKey("approval_steps.id", ondelete="RESTRICT"), nullable=False)
+    step_id = Column(UUID(as_uuid=True), ForeignKey("approval_steps.id", ondelete="RESTRICT"), nullable=True)
     decided_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
     decision = Column(String(20), nullable=False)  # APPROVED, REJECTED, RETURNED
     reason = Column(Text, nullable=True)

@@ -5,9 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
 from app.models.user import User
-from app.models.role import Role
-from app.schemas.auth import LoginRequest, TokenResponse, ChangePasswordRequest
-from app.schemas.user import UserResponse
+from app.schemas import LoginRequest, TokenResponse, ChangePasswordRequest, UserResponse
 from app.core.security import verify_password, hash_password, create_access_token
 from app.core.dependencies import get_current_user
 from app.core.exceptions import CredentialsException, BadRequestException
@@ -62,7 +60,6 @@ async def change_password(
         raise BadRequestException("Mật khẩu hiện tại không đúng")
     if len(body.new_password) < 8:
         raise BadRequestException("Mật khẩu mới phải có ít nhất 8 ký tự")
-
     current_user.hashed_password = hash_password(body.new_password)
     db.commit()
     return {"message": "Đổi mật khẩu thành công"}

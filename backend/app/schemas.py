@@ -1,0 +1,462 @@
+"""All Pydantic schemas for SciRes — merged into a single file."""
+
+from datetime import date, datetime
+from decimal import Decimal
+from typing import List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, EmailStr, Field
+
+
+# ══════════════════════════════════════════════════════════════════
+# AUTH
+# ══════════════════════════════════════════════════════════════════
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8)
+
+
+# ══════════════════════════════════════════════════════════════════
+# USER
+# ══════════════════════════════════════════════════════════════════
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    full_name: str = Field(..., min_length=2, max_length=200)
+    phone: Optional[str] = None
+    department_id: Optional[UUID] = None
+    academic_rank: Optional[str] = None
+    academic_title: Optional[str] = None
+    role: str = Field(default="FACULTY", pattern="^(FACULTY|STAFF|LEADERSHIP|REVIEWER|ADMIN)$")
+
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = Field(None, min_length=2, max_length=200)
+    phone: Optional[str] = None
+    department_id: Optional[UUID] = None
+    academic_rank: Optional[str] = None
+    academic_title: Optional[str] = None
+    role: Optional[str] = Field(None, pattern="^(FACULTY|STAFF|LEADERSHIP|REVIEWER|ADMIN)$")
+    is_active: Optional[bool] = None
+
+
+class UserResponse(BaseModel):
+    id: UUID
+    email: str
+    full_name: str
+    phone: Optional[str]
+    department_id: Optional[UUID]
+    academic_rank: Optional[str]
+    academic_title: Optional[str]
+    role: str
+    is_active: bool
+    created_at: datetime
+    department_name: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+class UserListResponse(BaseModel):
+    items: List[UserResponse]
+    total: int
+    page: int
+    size: int
+
+
+# ══════════════════════════════════════════════════════════════════
+# CATALOG
+# ══════════════════════════════════════════════════════════════════
+
+class DepartmentCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=200)
+    code: str = Field(..., min_length=2, max_length=20)
+
+
+class DepartmentUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=2, max_length=200)
+    code: Optional[str] = Field(None, min_length=2, max_length=20)
+    is_active: Optional[bool] = None
+
+
+class DepartmentResponse(BaseModel):
+    id: UUID
+    name: str
+    code: str
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ResearchFieldCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=200)
+    code: str = Field(..., min_length=2, max_length=20)
+
+
+class ResearchFieldUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=2, max_length=200)
+    code: Optional[str] = Field(None, min_length=2, max_length=20)
+    is_active: Optional[bool] = None
+
+
+class ResearchFieldResponse(BaseModel):
+    id: UUID
+    name: str
+    code: str
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ProposalCategoryCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=200)
+    code: str = Field(..., min_length=2, max_length=20)
+    level: str = Field(..., pattern="^(UNIVERSITY|FACULTY|MINISTERIAL)$")
+    max_duration_months: Optional[int] = Field(None, ge=1, le=60)
+    description: Optional[str] = None
+
+
+class ProposalCategoryUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=2, max_length=200)
+    code: Optional[str] = Field(None, min_length=2, max_length=20)
+    level: Optional[str] = Field(None, pattern="^(UNIVERSITY|FACULTY|MINISTERIAL)$")
+    max_duration_months: Optional[int] = Field(None, ge=1, le=60)
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class ProposalCategoryResponse(BaseModel):
+    id: UUID
+    name: str
+    code: str
+    level: str
+    max_duration_months: Optional[int]
+    description: Optional[str]
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ══════════════════════════════════════════════════════════════════
+# REGISTRATION PERIOD
+# ══════════════════════════════════════════════════════════════════
+
+class PeriodCreate(BaseModel):
+    title: str = Field(..., min_length=5, max_length=300)
+    description: Optional[str] = None
+    start_date: date
+    end_date: date
+
+
+class PeriodUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=5, max_length=300)
+    description: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+
+
+class PeriodResponse(BaseModel):
+    id: UUID
+    title: str
+    description: Optional[str]
+    start_date: date
+    end_date: date
+    status: str
+    created_by: Optional[UUID]
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ══════════════════════════════════════════════════════════════════
+# PROPOSAL
+# ══════════════════════════════════════════════════════════════════
+
+class ProposalMemberInfo(BaseModel):
+    user_id: UUID
+    full_name: str
+    email: str
+    role_in_proposal: str
+
+    model_config = {"from_attributes": True}
+
+
+class ProposalStatusHistoryItem(BaseModel):
+    id: UUID
+    from_status: Optional[str]
+    to_status: str
+    action: str
+    actor_id: Optional[UUID]
+    note: Optional[str]
+    changed_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ProposalCreate(BaseModel):
+    title: str = Field(..., min_length=10, max_length=500)
+    summary: Optional[str] = Field(None, min_length=50, max_length=5000)
+    objectives: Optional[str] = Field(None, min_length=50, max_length=5000)
+    methodology: Optional[str] = Field(None, min_length=50, max_length=5000)
+    expected_outcomes: Optional[str] = Field(None, min_length=20, max_length=3000)
+    duration_months: Optional[int] = Field(None, ge=1, le=36)
+    budget_estimated: Optional[Decimal] = None
+    field_id: Optional[UUID] = None
+    category_id: Optional[UUID] = None
+    period_id: Optional[UUID] = None
+    member_ids: Optional[List[UUID]] = []
+    submit: bool = False
+
+
+class ProposalUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=10, max_length=500)
+    summary: Optional[str] = Field(None, min_length=50, max_length=5000)
+    objectives: Optional[str] = Field(None, min_length=50, max_length=5000)
+    methodology: Optional[str] = Field(None, min_length=50, max_length=5000)
+    expected_outcomes: Optional[str] = Field(None, min_length=20, max_length=3000)
+    duration_months: Optional[int] = Field(None, ge=1, le=36)
+    budget_estimated: Optional[Decimal] = None
+    field_id: Optional[UUID] = None
+    category_id: Optional[UUID] = None
+    period_id: Optional[UUID] = None
+    member_ids: Optional[List[UUID]] = None
+
+
+class ProposalResponse(BaseModel):
+    id: UUID
+    title: str
+    summary: Optional[str]
+    objectives: Optional[str]
+    methodology: Optional[str]
+    expected_outcomes: Optional[str]
+    duration_months: Optional[int]
+    budget_estimated: Optional[Decimal]
+    status: str
+    revision_reason: Optional[str]
+    pi_id: UUID
+    pi_name: Optional[str] = None
+    department_id: Optional[UUID]
+    department_name: Optional[str] = None
+    field_id: Optional[UUID]
+    field_name: Optional[str] = None
+    category_id: Optional[UUID]
+    category_name: Optional[str] = None
+    period_id: Optional[UUID]
+    period_title: Optional[str] = None
+    submitted_at: Optional[datetime]
+    approved_at: Optional[datetime]
+    created_at: datetime
+    updated_at: datetime
+    members: List[ProposalMemberInfo] = []
+
+    model_config = {"from_attributes": True}
+
+
+class ProposalListResponse(BaseModel):
+    items: List[ProposalResponse]
+    total: int
+    page: int
+    size: int
+
+
+class ValidateAction(BaseModel):
+    action: str = Field(..., pattern="^(APPROVE|RETURN)$")
+    reason: Optional[str] = Field(None, min_length=10)
+
+
+class ApproveAction(BaseModel):
+    decision: str = Field(..., pattern="^(APPROVED|REJECTED)$")
+    reason: Optional[str] = Field(None, min_length=20)
+
+
+class ConfirmAcceptanceAction(BaseModel):
+    decision: str = Field(..., pattern="^(ACCEPTED|ACCEPTANCE_FAILED)$")
+    reason: Optional[str] = None
+
+
+class AddMemberBody(BaseModel):
+    user_id: UUID
+    role_in_proposal: str = Field(default="CO_INVESTIGATOR",
+                                  pattern="^(CO_INVESTIGATOR|CONSULTANT)$")
+
+
+# ══════════════════════════════════════════════════════════════════
+# COUNCIL
+# ══════════════════════════════════════════════════════════════════
+
+class CouncilMemberResponse(BaseModel):
+    user_id: UUID
+    full_name: str
+    email: str
+    role_in_council: str
+
+    model_config = {"from_attributes": True}
+
+
+class CouncilCreate(BaseModel):
+    name: str = Field(..., min_length=5, max_length=300)
+    council_type: str = Field(..., pattern="^(PROPOSAL_REVIEW|ACCEPTANCE)$")
+    proposal_id: UUID
+    scheduled_date: Optional[date] = None
+    location: Optional[str] = None
+
+
+class CouncilUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=5, max_length=300)
+    scheduled_date: Optional[date] = None
+    location: Optional[str] = None
+
+
+class CouncilResponse(BaseModel):
+    id: UUID
+    name: str
+    council_type: str
+    proposal_id: UUID
+    proposal_title: Optional[str] = None
+    status: str
+    scheduled_date: Optional[date]
+    location: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+    members: List[CouncilMemberResponse] = []
+
+    model_config = {"from_attributes": True}
+
+
+class AddCouncilMemberBody(BaseModel):
+    user_id: UUID
+    role_in_council: str = Field(default="REVIEWER",
+                                  pattern="^(CHAIR|SECRETARY|REVIEWER)$")
+
+
+# ══════════════════════════════════════════════════════════════════
+# REVIEW (Proposal Review)
+# ══════════════════════════════════════════════════════════════════
+
+class ReviewSubmit(BaseModel):
+    council_id: UUID
+    proposal_id: UUID
+    score: Decimal = Field(..., ge=0, le=100)
+    verdict: str = Field(..., pattern="^(PASS|FAIL|NEEDS_REVISION)$")
+    comments: str = Field(..., min_length=50)
+
+
+class ReviewResponse(BaseModel):
+    id: UUID
+    council_id: UUID
+    proposal_id: UUID
+    reviewer_id: UUID
+    reviewer_name: Optional[str] = None
+    score: Optional[Decimal]
+    comments: Optional[str]
+    verdict: Optional[str]
+    status: str
+    reviewed_at: Optional[datetime]
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ══════════════════════════════════════════════════════════════════
+# PROGRESS REPORT
+# ══════════════════════════════════════════════════════════════════
+
+class ProgressCreate(BaseModel):
+    report_period: Optional[str] = Field(None, max_length=50)
+    content: str = Field(..., min_length=50)
+    completion_pct: Decimal = Field(..., ge=0, le=100)
+    issues: Optional[str] = None
+    next_steps: str = Field(..., min_length=20)
+
+
+class ProgressResponse(BaseModel):
+    id: UUID
+    proposal_id: UUID
+    submitted_by: UUID
+    submitted_by_name: Optional[str] = None
+    report_order: int
+    report_period: Optional[str]
+    content: str
+    completion_pct: Decimal
+    issues: Optional[str]
+    next_steps: str
+    status: str
+    submitted_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ProgressListResponse(BaseModel):
+    items: List[ProgressResponse]
+    total: int
+    page: int
+    size: int
+
+
+# ══════════════════════════════════════════════════════════════════
+# ACCEPTANCE
+# ══════════════════════════════════════════════════════════════════
+
+class AcceptanceSubmit(BaseModel):
+    final_report: str = Field(..., min_length=100)
+    achievements: str = Field(..., min_length=50)
+    deliverables: Optional[str] = None
+
+
+class AcceptanceReturn(BaseModel):
+    reason: str = Field(..., min_length=10)
+
+
+class AcceptanceDossierResponse(BaseModel):
+    id: UUID
+    proposal_id: UUID
+    submitted_by: UUID
+    submitted_by_name: Optional[str] = None
+    final_report: str
+    achievements: str
+    deliverables: Optional[str]
+    status: str
+    revision_reason: Optional[str]
+    submitted_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AcceptanceReviewSubmit(BaseModel):
+    dossier_id: UUID
+    council_id: UUID
+    score: Decimal = Field(..., ge=0, le=100)
+    verdict: str = Field(..., pattern="^(PASS|FAIL)$")
+    comments: str = Field(..., min_length=20)
+
+
+class AcceptanceReviewResponse(BaseModel):
+    id: UUID
+    dossier_id: UUID
+    council_id: UUID
+    reviewer_id: UUID
+    reviewer_name: Optional[str] = None
+    score: Optional[Decimal]
+    comments: Optional[str]
+    verdict: Optional[str]
+    status: str
+    reviewed_at: Optional[datetime]
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

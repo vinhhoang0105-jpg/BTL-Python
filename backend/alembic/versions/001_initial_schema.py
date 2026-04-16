@@ -212,7 +212,7 @@ def upgrade() -> None:
         "approval_history",
         sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
         sa.Column("proposal_id", UUID(as_uuid=True), sa.ForeignKey("proposals.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("step_id", UUID(as_uuid=True), sa.ForeignKey("approval_steps.id", ondelete="RESTRICT"), nullable=False),
+        sa.Column("step_id", UUID(as_uuid=True), sa.ForeignKey("approval_steps.id", ondelete="RESTRICT"), nullable=True),
         sa.Column("decided_by", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="RESTRICT"), nullable=False),
         sa.Column("decision", sa.String(20), nullable=False),
         sa.Column("reason", sa.Text(), nullable=True),
