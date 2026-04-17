@@ -295,6 +295,13 @@ class PeriodResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PeriodListResponse(BaseModel):
+    items: List[PeriodResponse]
+    total: int
+    page: int
+    size: int
+
+
 # ══════════════════════════════════════════════════════════════════
 # PROPOSAL
 # ══════════════════════════════════════════════════════════════════

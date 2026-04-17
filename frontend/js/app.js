@@ -4,6 +4,28 @@
 const pages = {};
 function registerPage(id, initFn) { pages[id] = initFn; }
 
+// ── Pagination State ──────────────────────────────────────────────
+let _myPropPage = 1;
+let _validatePage = 1;
+let _periodPage = 1;
+let _councilPage = 1;
+let _userPage = 1;
+let _approvePage = 1;
+let _monitorPage = 1;
+let _myReviewPage = 1;
+const PAGE_SIZE = 10;
+
+function renderPagination(totalItems, currentPage, onPageChange) {
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+  if (totalPages <= 1) return '';
+  let html = '<div class="pagination" style="display:flex;justify-content:center;gap:8px;margin-top:16px">';
+  for (let i = 1; i <= totalPages; i++) {
+    html += `<button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-secondary'}" onclick="${onPageChange}(${i})">${i}</button>`;
+  }
+  html += '</div>';
+  return html;
+}
+
 function navigate(pageId) {
   // Route Guard: only allow traversing to pages present in the nav (except dashboard)
   const link = document.querySelector(`nav a[data-page="${pageId}"]`);
@@ -11,7 +33,7 @@ function navigate(pageId) {
     return navigate('dashboard');
   }
 
-  document.querySelectorAll('#page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
   
   const el = document.getElementById(`page-${pageId}`);
@@ -112,6 +134,7 @@ registerPage('dashboard', async () => {
 // PAGE: FACULTY — MY PROPOSALS
 // ══════════════════════════════════════════════════════════════════
 registerPage('my-proposals', async () => {
+  _myPropPage = 1;
   const el = document.getElementById('page-my-proposals');
   el.innerHTML = `<div class="section-header"><h2>Đề tài của tôi</h2></div><div id="msg-proposals"></div><div id="proposals-list">Đang tải...</div>`;
   await loadMyProposals();
@@ -119,10 +142,10 @@ registerPage('my-proposals', async () => {
 
 async function loadMyProposals() {
   try {
-    const data = await API.get('/proposals?size=50');
+    const data = await API.get(`/proposals?page=${_myPropPage}&size=${PAGE_SIZE}`);
     const el = document.getElementById('proposals-list');
     if (!data.items.length) { el.innerHTML = '<p class="empty">Chưa có đề tài nào.</p>'; return; }
-    el.innerHTML = `<table>
+    let html = `<table>
       <thead><tr><th>Tên đề tài</th><th>Trạng thái</th><th>Đợt</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
       <tbody>${data.items.map(p => `
         <tr>
@@ -139,8 +162,13 @@ async function loadMyProposals() {
           </td>
         </tr>`).join('')}
       </tbody></table>`;
+    
+    html += renderPagination(data.total, _myPropPage, 'gotoMyPropPage');
+    el.innerHTML = html;
   } catch(e) { document.getElementById('proposals-list').innerHTML = `<p class="alert alert-error">${e.message}</p>`; }
 }
+
+function gotoMyPropPage(p) { _myPropPage = p; loadMyProposals(); }
 
 async function submitProposal(id) {
   if (!confirm('Xác nhận nộp đề tài này?')) return;
@@ -432,6 +460,7 @@ registerPage('acceptance', async () => {
 // PAGE: STAFF — VALIDATE
 // ══════════════════════════════════════════════════════════════════
 registerPage('validate', async () => {
+  _validatePage = 1;
   const el = document.getElementById('page-validate');
   el.innerHTML = `<div class="section-header"><h2>Kiểm tra hồ sơ</h2></div><div id="msg-validate"></div><div id="validate-list">Đang tải...</div>`;
   await loadValidateList();
@@ -439,22 +468,28 @@ registerPage('validate', async () => {
 
 async function loadValidateList() {
   try {
-    const data = await API.get('/proposals?status=SUBMITTED&size=50');
+    const data = await API.get(`/proposals?status=SUBMITTED&page=${_validatePage}&size=${PAGE_SIZE}`);
     const el = document.getElementById('validate-list');
     if (!data.items.length) { el.innerHTML = '<p class="empty">Không có hồ sơ chờ kiểm tra.</p>'; return; }
-    el.innerHTML = `<table>
+    let html = `<table>
       <thead><tr><th>Tên đề tài</th><th>PI</th><th>Đợt</th><th>Ngày nộp</th><th>Thao tác</th></tr></thead>
       <tbody>${data.items.map(p => `
         <tr>
           <td>${p.title}</td><td>${p.pi_name}</td><td>${p.period_title||'—'}</td><td>${fmtDateShort(p.submitted_at)}</td>
           <td>
+            <button class="btn btn-sm btn-secondary" onclick="viewProposal('${p.id}')">Xem</button>
             <button class="btn btn-sm btn-success" onclick="validateProposal('${p.id}','APPROVE')">✓ Hợp lệ</button>
             <button class="btn btn-sm btn-warning" onclick="openReturnModal('${p.id}')">↩ Trả về</button>
           </td>
         </tr>`).join('')}
       </tbody></table>`;
+    
+    html += renderPagination(data.total, _validatePage, 'gotoValidatePage');
+    el.innerHTML = html;
   } catch(e) { document.getElementById('validate-list').innerHTML = `<p class="alert alert-error">${e.message}</p>`; }
 }
+
+function gotoValidatePage(p) { _validatePage = p; loadValidateList(); }
 
 async function validateProposal(id, action, reason) {
   try {
@@ -484,6 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // PAGE: STAFF — PERIODS
 // ══════════════════════════════════════════════════════════════════
 registerPage('periods', async () => {
+  _periodPage = 1;
   const el = document.getElementById('page-periods');
   el.innerHTML = `<div class="section-header"><h2>Đợt đăng ký</h2>
     <button class="btn btn-primary" onclick="openModal('modal-period')">+ Tạo đợt</button></div>
@@ -493,12 +529,12 @@ registerPage('periods', async () => {
 
 async function loadPeriods() {
   try {
-    const data = await API.get('/periods');
+    const data = await API.get(`/periods?page=${_periodPage}&size=${PAGE_SIZE}`);
     const el = document.getElementById('periods-list');
-    if (!data.length) { el.innerHTML = '<p class="empty">Chưa có đợt đăng ký.</p>'; return; }
-    el.innerHTML = `<table>
+    if (!data.items.length) { el.innerHTML = '<p class="empty">Chưa có đợt đăng ký.</p>'; return; }
+    let html = `<table>
       <thead><tr><th>Tiêu đề</th><th>Từ</th><th>Đến</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-      <tbody>${data.map(p => `
+      <tbody>${data.items.map(p => `
         <tr>
           <td>${p.title}</td><td>${p.start_date}</td><td>${p.end_date}</td><td>${badge(p.status)}</td>
           <td>
@@ -507,8 +543,13 @@ async function loadPeriods() {
           </td>
         </tr>`).join('')}
       </tbody></table>`;
+    
+    html += renderPagination(data.total, _periodPage, 'gotoPeriodPage');
+    el.innerHTML = html;
   } catch(e) { document.getElementById('periods-list').innerHTML = `<p class="alert alert-error">${e.message}</p>`; }
 }
+
+function gotoPeriodPage(p) { _periodPage = p; loadPeriods(); }
 
 async function periodAction(id, action) {
   try {
@@ -678,6 +719,7 @@ async function returnDossier(proposalId) {
 // PAGE: LEADERSHIP — APPROVE
 // ══════════════════════════════════════════════════════════════════
 registerPage('approve', async () => {
+  _approvePage = 1;
   const el = document.getElementById('page-approve');
   el.innerHTML = `<div class="section-header"><h2>Phê duyệt đề tài</h2></div>
     <div id="msg-approve"></div><div id="approve-list">Đang tải...</div>`;
@@ -686,10 +728,10 @@ registerPage('approve', async () => {
 
 async function loadApproveList() {
   try {
-    const data = await API.get('/proposals?status=REVIEWED&size=50');
+    const data = await API.get(`/proposals?status=REVIEWED&page=${_approvePage}&size=${PAGE_SIZE}`);
     const el = document.getElementById('approve-list');
     if (!data.items.length) { el.innerHTML = '<p class="empty">Không có đề tài chờ phê duyệt.</p>'; return; }
-    el.innerHTML = `<table>
+    let html = `<table>
       <thead><tr><th>Tên đề tài</th><th>PI</th><th>Lĩnh vực</th><th>Thao tác</th></tr></thead>
       <tbody>${data.items.map(p => `
         <tr>
@@ -701,8 +743,13 @@ async function loadApproveList() {
           </td>
         </tr>`).join('')}
       </tbody></table>`;
+    
+    html += renderPagination(data.total, _approvePage, 'gotoApprovePage');
+    el.innerHTML = html;
   } catch(e) { document.getElementById('approve-list').innerHTML = `<p class="alert alert-error">${e.message}</p>`; }
 }
+
+function gotoApprovePage(p) { _approvePage = p; loadApproveList(); }
 
 async function viewReviewsForApproval(id) {
   try {
@@ -775,19 +822,30 @@ async function confirmAcceptance(id, decision) {
 // PAGE: LEADERSHIP — MONITOR
 // ══════════════════════════════════════════════════════════════════
 registerPage('monitor', async () => {
+  _monitorPage = 1;
   const el = document.getElementById('page-monitor');
   el.innerHTML = `<div class="section-header"><h2>Theo dõi tiến độ</h2></div><div id="monitor-list">Đang tải...</div>`;
+  await loadMonitorList();
+});
+
+async function loadMonitorList() {
   try {
-    const data = await API.get('/progress?size=50');
-    if (!data.items.length) { document.getElementById('monitor-list').innerHTML = '<p class="empty">Chưa có báo cáo.</p>'; return; }
-    document.getElementById('monitor-list').innerHTML = `<table>
+    const data = await API.get(`/progress?page=${_monitorPage}&size=${PAGE_SIZE}`);
+    const el = document.getElementById('monitor-list');
+    if (!data.items.length) { el.innerHTML = '<p class="empty">Chưa có báo cáo.</p>'; return; }
+    let html = `<table>
       <thead><tr><th>Đề tài</th><th>Người nộp</th><th>#</th><th>Tiến độ</th><th>Ngày nộp</th></tr></thead>
       <tbody>${data.items.map(r => `<tr>
         <td>${r.proposal_id}</td><td>${r.submitted_by_name}</td><td>${r.report_order}</td>
         <td>${r.completion_pct}%</td><td>${fmtDateShort(r.submitted_at)}</td>
       </tr>`).join('')}</tbody></table>`;
+    
+    html += renderPagination(data.total, _monitorPage, 'gotoMonitorPage');
+    el.innerHTML = html;
   } catch(e) { document.getElementById('monitor-list').innerHTML = `<p class="alert alert-error">${e.message}</p>`; }
-});
+}
+
+function gotoMonitorPage(p) { _monitorPage = p; loadMonitorList(); }
 
 
 // ══════════════════════════════════════════════════════════════════
@@ -892,6 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // PAGE: ADMIN — USERS
 // ══════════════════════════════════════════════════════════════════
 registerPage('users', async () => {
+  _userPage = 1;
   const el = document.getElementById('page-users');
   el.innerHTML = `<div class="section-header"><h2>Quản lý người dùng</h2>
     <button class="btn btn-primary" onclick="openModal('modal-user')">+ Thêm user</button></div>
@@ -901,16 +960,21 @@ registerPage('users', async () => {
 
 async function loadUsers() {
   try {
-    const data = await API.get('/users?size=100');
+    const data = await API.get(`/users?page=${_userPage}&size=${PAGE_SIZE}`);
     const el = document.getElementById('users-list');
-    el.innerHTML = `<table>
+    let html = `<table>
       <thead><tr><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Khoa</th><th>Trạng thái</th></tr></thead>
       <tbody>${data.items.map(u => `<tr>
         <td>${u.full_name}</td><td>${u.email}</td><td>${badge(u.role)}</td>
         <td>${u.department_name||'—'}</td><td>${u.is_active ? '✅' : '❌'}</td>
       </tr>`).join('')}</tbody></table>`;
+    
+    html += renderPagination(data.total, _userPage, 'gotoUserPage');
+    el.innerHTML = html;
   } catch(e) { document.getElementById('users-list').innerHTML = `<p class="alert alert-error">${e.message}</p>`; }
 }
+
+function gotoUserPage(p) { _userPage = p; loadUsers(); }
 
 document.addEventListener('DOMContentLoaded', async () => {
   const depts = await API.get('/catalog/departments').catch(() => []);

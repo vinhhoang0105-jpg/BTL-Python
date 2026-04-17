@@ -15,12 +15,21 @@ from app.core.exceptions import NotFoundException, BadRequestException
 router = APIRouter(prefix="/periods", tags=["Registration Periods"])
 
 
-@router.get("/", response_model=list[PeriodResponse])
-async def list_periods(status: str | None = Query(None), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+@router.get("/", response_model=PeriodListResponse)
+async def list_periods(
+    status: str | None = Query(None),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     q = db.query(RegistrationPeriod)
     if status:
         q = q.filter(RegistrationPeriod.status == status)
-    return q.order_by(RegistrationPeriod.created_at.desc()).all()
+    
+    total = q.count()
+    items = q.order_by(RegistrationPeriod.created_at.desc()).offset((page - 1) * size).limit(size).all()
+    return PeriodListResponse(items=items, total=total, page=page, size=size)
 
 
 @router.post("/", response_model=PeriodResponse, status_code=201)
