@@ -54,7 +54,13 @@ const API = (() => {
     
     if (res.status === 204) return null;
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+    if (!res.ok) {
+      let msg = data.detail || `HTTP ${res.status}`;
+      if (Array.isArray(data.detail)) {
+        msg = data.detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join('\\n');
+      }
+      throw new Error(msg);
+    }
     return data;
   }
 

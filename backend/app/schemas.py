@@ -322,10 +322,10 @@ class ProposalStatusHistoryItem(BaseModel):
 
 class ProposalCreate(BaseModel):
     title: str = Field(..., min_length=10, max_length=500)
-    summary: Optional[str] = Field(None, min_length=50, max_length=5000)
-    objectives: Optional[str] = Field(None, min_length=50, max_length=5000)
-    methodology: Optional[str] = Field(None, min_length=50, max_length=5000)
-    expected_outcomes: Optional[str] = Field(None, min_length=20, max_length=3000)
+    summary: Optional[str] = Field(None, max_length=5000)
+    objectives: Optional[str] = Field(None, max_length=5000)
+    methodology: Optional[str] = Field(None, max_length=5000)
+    expected_outcomes: Optional[str] = Field(None, max_length=3000)
     duration_months: Optional[int] = Field(None, ge=1, le=36)
     budget_estimated: Optional[Decimal] = None
     field_id: Optional[UUID] = None
@@ -338,10 +338,10 @@ class ProposalCreate(BaseModel):
 
 class ProposalUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=10, max_length=500)
-    summary: Optional[str] = Field(None, min_length=50, max_length=5000)
-    objectives: Optional[str] = Field(None, min_length=50, max_length=5000)
-    methodology: Optional[str] = Field(None, min_length=50, max_length=5000)
-    expected_outcomes: Optional[str] = Field(None, min_length=20, max_length=3000)
+    summary: Optional[str] = Field(None, max_length=5000)
+    objectives: Optional[str] = Field(None, max_length=5000)
+    methodology: Optional[str] = Field(None, max_length=5000)
+    expected_outcomes: Optional[str] = Field(None, max_length=3000)
     duration_months: Optional[int] = Field(None, ge=1, le=36)
     budget_estimated: Optional[Decimal] = None
     field_id: Optional[UUID] = None
