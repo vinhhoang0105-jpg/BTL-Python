@@ -486,12 +486,12 @@ class ReviewResponse(BaseModel):
     proposal_title: Optional[str] = None
     reviewer_id: UUID
     reviewer_name: Optional[str] = None
-    score: Optional[Decimal]
-    comments: Optional[str]
-    verdict: Optional[str]
+    score: Optional[Decimal] = None
+    comments: Optional[str] = None
+    verdict: Optional[str] = None
     status: str
     criteria_scores: Optional[Any] = None
-    reviewed_at: Optional[datetime]
+    reviewed_at: Optional[datetime] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

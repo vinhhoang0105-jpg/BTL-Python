@@ -94,7 +94,7 @@ async def submit_review(
     )
 
 
-@router.get("/reviews/my", response_model=List[ReviewResponse])
+@router.get("/reviews/reviewer-list", response_model=List[ReviewResponse])
 async def my_reviews(
     current_user: User = Depends(require_roles("REVIEWER")),
     db: Session = Depends(get_db),

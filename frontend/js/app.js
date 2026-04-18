@@ -952,8 +952,8 @@ registerPage('my-reviews', async () => {
   el.innerHTML = `<div class="section-header"><h2>Phản biện được phân công</h2></div>
     <div id="msg-my-reviews"></div><div id="my-reviews-list">Đang tải danh sách...</div>`;
   try {
-    console.log('Fetching my reviews from /api/reviews/my...');
-    const reviews = await API.get('/reviews/my');
+    console.log('Fetching my reviews from /api/reviews/reviewer-list...');
+    const reviews = await API.get('/reviews/reviewer-list');
     console.log('Reviews received:', reviews);
     
     const el2 = document.getElementById('my-reviews-list');
